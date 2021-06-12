@@ -43,8 +43,8 @@ def level3(window_width, window_height, line_length) -> Level:
     rectangles = [
         (0, 0, 50, window_height),
         (window_width - 50, 0, 50, window_height),
-        (50, window_height - 200, 400, 50),
-        (300, 100, 400, 50),
+        (50, window_height - 200, 400, 25),
+        (300, 100, 400, 25),
     ]
     end_rect = (window_width - 150, 0, 100, 100)
     return Level("Level 3", points, rectangles, end_rect)
