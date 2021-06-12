@@ -6,6 +6,8 @@ from pyglet.graphics import Batch, OrderedGroup
 from pyglet.shapes import Circle, Line, Rectangle
 from pyglet.window import key
 
+import levels
+
 Point = NamedTuple('Point', [('x', float), ('y', float)])
 Vector = NamedTuple('Vector', [('x', float), ('y', float)])
 Rect = NamedTuple('Rect', [('x', float), ('y', float), ('w', float), ('h', float)])
@@ -18,7 +20,7 @@ LINE_LENGTH = 75
 class State:
     """Holds all game state."""
 
-    def __init__(self, window_width, window_height, restart) -> None:
+    def __init__(self, level: levels.Level, window_width, window_height, restart) -> None:
         # Define the player thingy
         self.batch = Batch()
         self.game_group = OrderedGroup(0)
@@ -27,13 +29,12 @@ class State:
 
         self.line = Line(0, 0, 0, 0, batch=self.batch, group=self.game_group)
         self.circles = [
-            Circle(25, window_height - 20, RADIUS, batch=self.batch, group=self.game_group),
-            Circle(20, window_height - 20 - LINE_LENGTH, RADIUS, batch=self.batch, group=self.game_group),
+            Circle(point[0], point[1], RADIUS, batch=self.batch, group=self.game_group) for point in level.points
         ]
         self.rectangles = [
-            Rectangle(200, window_height - 300, 100, 100, color=(255, 0, 0), batch=self.batch, group=self.game_group)
+            Rectangle(rect[0], rect[1], rect[2], rect[3], color=(255, 0, 0), batch=self.batch, group=self.game_group) for rect in level.rectangles
         ]
-        self.end_rect = Rectangle(window_width - 100, 0, 100, 100, color=(0, 255, 0), batch=self.batch, group=self.game_group)
+        self.end_rect = Rectangle(level.end_rect[0], level.end_rect[1], level.end_rect[2], level.end_rect[3], color=(0, 255, 0), batch=self.batch, group=self.game_group)
 
         self.velocity = Vector(0.0, 0.0)
         self.unlocked = 0
@@ -89,7 +90,7 @@ class State:
             if self.circle_rect_collision(c, self.end_rect):
                 self.won = True
                 pg.clock.unschedule(self.update)
-                pg.clock.schedule_once(self.restart, 2)
+                pg.clock.schedule_once(self.restart, 2, True)
                 self.won_text.batch = self.batch
                 self.background.opacity = 64
                 return True
@@ -98,7 +99,7 @@ class State:
                 if self.circle_rect_collision(c, r):
                     self.lost = True
                     pg.clock.unschedule(self.update)
-                    pg.clock.schedule_once(self.restart, 2)
+                    pg.clock.schedule_once(self.restart, 1, False)
                     self.lost_text.batch = self.batch
                     self.background.opacity = 64
                     return True
@@ -146,15 +147,29 @@ def main():
     # Make a window
     window = pg.window.Window(caption='Swing!')
 
+    all_levels = [
+        levels.level1(window.width, window.height, LINE_LENGTH),
+        levels.level2(window.width, window.height, LINE_LENGTH),
+    ]
+    current_level = 0
+
     # Start a new game
     state = None
 
-    def start_new(dt):
-        nonlocal state
-        state = State(window.width, window.height, start_new)
+    def start_new(dt, next_level: bool):
+        nonlocal state, current_level
+
+        if next_level:
+            current_level += 1
+        if current_level >= len(all_levels):
+            exit(0)
+
+        level = all_levels[current_level]
+        window.set_caption(f"Swing - {level.name}")
+        state = State(level, window.width, window.height, start_new)
         pg.clock.schedule(state.update)
 
-    start_new(0)
+    start_new(0, False)
 
     # Add event handlers
     @window.event
@@ -171,7 +186,8 @@ def main():
             state.unlocked = (state.unlocked + 1) % 2
             state.velocity = Vector(0.0, 0.0)
         if symbol == key.R:
-            start_new(0)
+            pg.clock.unschedule(start_new)
+            start_new(0, False)
 
     # Run the app
     pg.app.run()
