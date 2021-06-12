@@ -152,6 +152,8 @@ class Window(pg.window.Window):
             levels.level1(self.width, self.height, LINE_LENGTH),
             levels.level2(self.width, self.height, LINE_LENGTH),
             levels.level3(self.width, self.height, LINE_LENGTH),
+            levels.level4(self.width, self.height, LINE_LENGTH),
+            levels.level5(self.width, self.height, LINE_LENGTH),
         ]
         self.current_level = 0
         self.state = None
@@ -164,6 +166,7 @@ class Window(pg.window.Window):
 
         if self.state is not None:
             pg.clock.unschedule(self.state.update)
+            pg.clock.unschedule(self.start_new)
         level = self.all_levels[self.current_level]
         self.set_caption(f"Swing - {level.name}")
         self.state = State(level, self.width, self.height, self.start_new)
