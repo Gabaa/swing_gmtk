@@ -27,7 +27,7 @@ class State:
         self.mid_group = OrderedGroup(1)
         self.text_group = OrderedGroup(2)
 
-        self.line = Line(0, 0, 0, 0, batch=self.batch, group=self.game_group)
+        self.line = Line(0, 0, 0, 0, width=5, batch=self.batch, group=self.game_group)
         self.circles = [
             Circle(point[0], point[1], RADIUS, batch=self.batch, group=self.game_group) for point in level.points
         ]
