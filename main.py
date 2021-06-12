@@ -143,53 +143,54 @@ class State:
         self.line.y2 = self.circles[1].y
 
 
-def main():
-    # Make a window
-    window = pg.window.Window(caption='Swing!')
+class Window(pg.window.Window):
+    state: State
 
-    all_levels = [
-        levels.level1(window.width, window.height, LINE_LENGTH),
-        levels.level2(window.width, window.height, LINE_LENGTH),
-    ]
-    current_level = 0
+    def __init__(self):
+        super().__init__(caption='Swing!')
+        self.all_levels = [
+            levels.level1(self.width, self.height, LINE_LENGTH),
+            levels.level2(self.width, self.height, LINE_LENGTH),
+            levels.level3(self.width, self.height, LINE_LENGTH),
+        ]
+        self.current_level = 0
+        self.state = None
 
-    # Start a new game
-    state = None
-
-    def start_new(dt, next_level: bool):
-        nonlocal state, current_level
-
+    def start_new(self, dt: float, next_level: bool):
         if next_level:
-            current_level += 1
-        if current_level >= len(all_levels):
+            self.current_level += 1
+        if self.current_level >= len(self.all_levels):
             exit(0)
 
-        level = all_levels[current_level]
-        window.set_caption(f"Swing - {level.name}")
-        state = State(level, window.width, window.height, start_new)
-        pg.clock.schedule(state.update)
+        if self.state is not None:
+            pg.clock.unschedule(self.state.update)
+        level = self.all_levels[self.current_level]
+        self.set_caption(f"Swing - {level.name}")
+        self.state = State(level, self.width, self.height, self.start_new)
+        pg.clock.schedule(self.state.update)
 
-    start_new(0, False)
-
-    # Add event handlers
-    @window.event
-    def on_draw():
-        state.update_line()
+    def on_draw(self):
+        self.state.update_line()
 
         # Render to the window
-        window.clear()
-        state.batch.draw()
+        self.clear()
+        self.state.batch.draw()
 
-    @window.event
-    def on_key_press(symbol, modifiers):
+    def on_key_press(self, symbol, modifiers):
+        if symbol == key.ESCAPE:
+            pg.app.exit()
         if symbol == key.SPACE:
-            state.unlocked = (state.unlocked + 1) % 2
-            state.velocity = Vector(0.0, 0.0)
+            self.state.unlocked = (self.state.unlocked + 1) % 2
+            self.state.velocity = Vector(0.0, 0.0)
         if symbol == key.R:
-            pg.clock.unschedule(start_new)
-            start_new(0, False)
+            pg.clock.unschedule(self.start_new)
 
-    # Run the app
+            self.start_new(0, False)
+
+
+def main():
+    window = Window()
+    window.start_new(0, False)
     pg.app.run()
 
 
