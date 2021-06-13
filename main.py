@@ -193,7 +193,8 @@ class Window(pg.window.Window):
         if self.state is not None:
             pg.clock.unschedule(self.state.update)
             pg.clock.unschedule(self.start_new)
-            self.resets += 1
+            if not next_level:
+                self.resets += 1
 
         level = self.all_levels[self.current_level]
         self.set_caption(f"Swing - {level.name}")
