@@ -167,6 +167,7 @@ class Window(pg.window.Window):
         if self.state is not None:
             pg.clock.unschedule(self.state.update)
             pg.clock.unschedule(self.start_new)
+
         level = self.all_levels[self.current_level]
         self.set_caption(f"Swing - {level.name}")
         self.state = State(level, self.width, self.height, self.start_new)
@@ -185,9 +186,8 @@ class Window(pg.window.Window):
         if symbol == key.SPACE:
             self.state.unlocked = (self.state.unlocked + 1) % 2
             self.state.velocity = Vector(0.0, 0.0)
-        if symbol == key.R:
+        if symbol == key.R and not (self.state.won or self.state.lost):
             pg.clock.unschedule(self.start_new)
-
             self.start_new(0, False)
 
 
