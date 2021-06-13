@@ -1,10 +1,12 @@
 from math import sqrt
+from time import time
 from typing import NamedTuple
 
 import pyglet as pg
 from pyglet.graphics import Batch, OrderedGroup
 from pyglet.shapes import Circle, Line, Rectangle
 from pyglet.window import key
+from pyglet.text import Label
 
 import levels
 
@@ -158,15 +160,40 @@ class Window(pg.window.Window):
         self.current_level = 0
         self.state = None
 
+        self.start_time = time()
+        self.resets = 0
+
+        self.congrats_label = Label(
+            'Congratulations!',
+            font_size=32, bold=True, color=(200, 200, 200, 255),
+            x=self.width / 2, y=3 * self.height / 4,
+            anchor_x='center', anchor_y='center'
+        )
+        self.time_label = Label(
+            '',
+            font_size=28, color=(200, 200, 200, 255),
+            x=self.width / 2, y=2 * self.height / 4,
+            anchor_x='center', anchor_y='center'
+        )
+        self.resets_label = Label(
+            '',
+            font_size=28, color=(200, 200, 200, 255),
+            x=self.width / 2, y=self.height / 4,
+            anchor_x='center', anchor_y='center'
+        )
+
     def start_new(self, dt: float, next_level: bool):
         if next_level:
             self.current_level += 1
         if self.current_level >= len(self.all_levels):
-            exit(0)
+            self.time_label.text = f"Time: {round(time() - self.start_time, 4)} seconds"
+            self.resets_label.text = f"Resets: {self.resets}"
+            return
 
         if self.state is not None:
             pg.clock.unschedule(self.state.update)
             pg.clock.unschedule(self.start_new)
+            self.resets += 1
 
         level = self.all_levels[self.current_level]
         self.set_caption(f"Swing - {level.name}")
@@ -178,11 +205,22 @@ class Window(pg.window.Window):
 
         # Render to the window
         self.clear()
+
+        if self.current_level >= len(self.all_levels):
+            self.congrats_label.draw()
+            self.time_label.draw()
+            self.resets_label.draw()
+            return
+
         self.state.batch.draw()
 
     def on_key_press(self, symbol, modifiers):
         if symbol == key.ESCAPE:
             pg.app.exit()
+
+        if self.current_level >= len(self.all_levels):
+            return
+
         if symbol == key.SPACE:
             self.state.unlocked = (self.state.unlocked + 1) % 2
             self.state.velocity = Vector(0.0, 0.0)
